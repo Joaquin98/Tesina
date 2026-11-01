@@ -1,0 +1,16 @@
+{
+  "seed": 42,
+  "validation_fraction": 0.3,
+  "target_per_class": 600,
+  "partition_sha256": {
+    "balanced_train.csv": "c21f772167b3fe6c53c2f7c213355ac0de1ffa2ab60f50a488fc675489769f7a",
+    "balanced_validation.csv": "8dc4da3c37375b354edccc18c01ce29968373608837dd9e6e080c1db4fbbc7cf",
+    "manifest.csv": "d54886538df9d0da1157a212660c2ef832c2217243632ecacad508ff2a40a5df",
+    "test.csv": "ac6dcc704f5283845e3c6caeac720a36c63b71c5d802ff7d217dd202d1f94ed0",
+    "train.csv": "3faef5a9aba1d94f57b38de6c15d05434b0676778f54c54b66e9c243d3eba4b9",
+    "validation.csv": "6eb7f6ce78a66313d714eda8451b385a0d9f402aeec1f3a65bf0f5d58bbf0e86"
+  },
+  "clips": 4082,
+  "shared_clips": 0,
+  "shared_content_hashes": 0
+}
