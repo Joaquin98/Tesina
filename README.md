@@ -4,6 +4,14 @@ Modelos M0, M1, M2 y M3 para clasificar jugadas de rugby.
 
 Requisitos: Python 3.13, Git y Git LFS. Los comandos son para Windows (PowerShell).
 
+## Datos
+
+- `data/videos/clips_224`: clips del dataset para entrenamiento, validación y test.
+- `data/videos/partidos_evaluacion`: segmentos de partidos para probar los modelos.
+
+Debido al límite de peso, sólo se incluye una selección de segmentos de partidos.
+Los clips y los videos incluidos ya están recortados a **224 × 224 píxeles**.
+
 ## 1. Descargar
 
 ```powershell
