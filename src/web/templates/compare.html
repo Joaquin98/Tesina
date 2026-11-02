@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparación de modelos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='manual-labels-v9') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/compare.css', v='omission-review-v1') }}">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+
+    <div class="container">
+        <div class="section">
+            <h2>Comparar modelos</h2>
+            <p class="subtitle">Aplicá entre dos y cuatro modelos al mismo video y compará sus detecciones.</p>
+        </div>
+
+        <section id="compare-history-section" class="section compare-history-section compare-setup-section" aria-labelledby="compare-history-title">
+            <div class="compare-history-heading">
+                <div>
+                    <span class="compare-featured-kicker">Resultados guardados</span>
+                    <h3 id="compare-history-title">Historial de comparaciones</h3>
+                    <p>Volvé a abrir una comparación con sus modelos, video, umbrales y timelines sin procesarla otra vez.</p>
+                </div>
+                <div class="compare-history-heading-actions">
+                    <button id="compare-history-toggle" class="btn btn-secondary" type="button" aria-expanded="true" aria-controls="compare-history-list">Ocultar</button>
+                    <button id="refresh-comparison-history" class="btn btn-secondary" type="button">Actualizar</button>
+                </div>
+            </div>
+            <p id="compare-history-status" class="compare-history-status" aria-live="polite"></p>
+            <div id="compare-history-list" class="compare-history-list">
+                <div class="loading">Cargando historial...</div>
+            </div>
+        </section>
+
+        <!-- Model Selection -->
+        <div class="section compare-setup-section">
+            <h3>1. Elegir modelos (entre 2 y 4)</h3>
+            <div class="selection-toolbar">
+                <label class="search-field"><span class="sr-only">Buscar modelo</span><input id="compare-model-search" type="search" placeholder="Buscar modelo..." autocomplete="off"></label>
+                <select id="compare-model-filter" aria-label="Filtrar modelos">
+                    <option value="all" selected>Todos los modelos</option>
+                    <option value="recommended">Recomendados</option>
+                    <option value="live">Livianos para CPU</option>
+                    <option value="ensemble">Ensembles</option>
+                </select>
+                <span id="compare-model-results-count" class="selection-meta" aria-live="polite"></span>
+            </div>
+            <div class="compare-featured-preset">
+                <div>
+                    <span class="compare-featured-kicker">Comparación sugerida por el experimento</span>
+                    <strong>ResNet-50 + BiGRU vs. RGB + YOLO con ROI de alta resolución</strong>
+                    <small>Selecciona la rama histórica ganadora y el ensemble high-res para analizarlos sobre el mismo video.</small>
+                </div>
+                <button id="select-core-comparison" class="btn btn-secondary" type="button">Elegir estos dos</button>
+            </div>
+            <p id="models-selected-count" class="selection-count" aria-live="polite">0 modelos seleccionados</p>
+            <p class="model-card-help">Hacé clic para seleccionar. Usá <strong>Ver arquitectura</strong> o botón derecho para abrir la ficha del modelo.</p>
+            <div id="models-comparison-grid" class="models-grid compact-grid">
+                <div class="loading">Cargando modelos...</div>
+            </div>
+        </div>
+
+        <!-- Video Selection -->
+        <div class="section compare-setup-section">
+            <h3>2. Elegir video</h3>
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="compare-library">Biblioteca</button>
+                <button class="tab-btn" data-tab="compare-processed">Procesados</button>
+            </div>
+            <div class="selection-toolbar">
+                <label class="search-field"><span class="sr-only">Buscar video</span><input id="compare-video-search" type="search" placeholder="Buscar por nombre u origen..." autocomplete="off"></label>
+                <select id="compare-video-source-filter" aria-label="Filtrar videos por origen">
+                    <option value="all">Todos los orígenes</option>
+                    <option value="pablo granitto">Pablo Granitto</option>
+                    <option value="juan manuel arriazu">Juan Manuel Arriazu</option>
+                    <option value="final_tests">Pruebas finales</option>
+                    <option value="web_downloads">Pruebas externas</option>
+                    <option value="local">Archivos locales</option>
+                </select>
+                <span id="compare-video-results-count" class="selection-meta" aria-live="polite"></span>
+            </div>
+            <div id="compare-library-tab" class="tab-content active">
+                <div id="videos-comparison-grid" class="videos-grid compact-grid">
+                    <div class="loading">Cargando videos...</div>
+                </div>
+            </div>
+            <div id="compare-processed-tab" class="tab-content">
+                <div id="processed-comparison-grid" class="videos-grid compact-grid">
+                    <div class="loading">Cargando videos procesados...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parameters -->
+        <div class="section compare-setup-section">
+            <h3>3. Parámetros de detección</h3>
+            <div class="parameters-grid">
+                <div class="param-group">
+                    <label for="compare-confidence">
+                        Confianza mínima para scrum y piso general
+                        <span class="param-value" id="compare-confidence-value">0.70</span>
+                    </label>
+                    <input type="range" id="compare-confidence" min="0" max="1" step="0.05" value="0.70">
+                </div>
+                <div class="param-group">
+                    <label for="compare-line-confidence">
+                        Umbral mínimo para line
+                        <span class="param-value" id="compare-line-confidence-value">0.95</span>
+                    </label>
+                    <input type="range" id="compare-line-confidence" min="0" max="1" step="0.05" value="0.95">
+                    <p class="param-description">Se aplica a line antes de agrupar las ventanas temporales.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Run Comparison -->
+        <div class="section compare-setup-section compare-run-section">
+            <button id="run-comparison" class="btn btn-primary btn-large" disabled>
+                Ejecutar comparación
+            </button>
+            <p id="compare-validation" class="validation-message"></p>
+        </div>
+
+        <!-- Comparison Results -->
+        <div id="comparison-results" class="section comparison-results-section" style="display:none;">
+            <div class="compare-results-heading">
+                <div>
+                    <span class="compare-featured-kicker">Revisión sincronizada</span>
+                    <h3>Video y timelines de la comparación</h3>
+                    <p id="compare-results-subtitle">Los dos modelos se muestran sobre la misma escala temporal.</p>
+                </div>
+                <button id="compare-wide-toggle" class="btn btn-secondary" type="button" aria-pressed="false">Vista amplia</button>
+            </div>
+
+            <div class="compare-review-layout">
+                <div class="compare-video-panel">
+                    <video id="compare-video" controls controlslist="nofullscreen" preload="metadata" playsinline>
+                        Tu navegador no puede reproducir este video.
+                    </video>
+                    <div class="compare-video-context">
+                        <strong id="compare-video-title">Video comparado</strong>
+                        <span id="compare-current-time">0:00 / 0:00</span>
+                        <span id="compare-active-events" class="compare-active-events">Sin jugadas activas</span>
+                    </div>
+                </div>
+
+                <aside class="compare-result-thresholds" aria-labelledby="compare-result-threshold-title">
+                    <div class="compare-result-threshold-heading">
+                        <div>
+                            <span class="compare-featured-kicker">Después de clasificar</span>
+                            <h4 id="compare-result-threshold-title">Modificar umbrales</h4>
+                        </div>
+                        <button id="compare-threshold-reset" class="btn btn-secondary" type="button">Restablecer</button>
+                    </div>
+                    <label for="compare-results-confidence">
+                        <span><strong>Scrum y piso general</strong><output id="compare-results-confidence-value">0.70</output></span>
+                        <input type="range" id="compare-results-confidence" min="0" max="1" step="0.01" value="0.70">
+                    </label>
+                    <label for="compare-results-line-confidence">
+                        <span><strong>Umbral para line</strong><output id="compare-results-line-confidence-value">0.95</output></span>
+                        <input type="range" id="compare-results-line-confidence" min="0" max="1" step="0.01" value="0.95">
+                    </label>
+                    <p id="compare-threshold-status" class="compare-threshold-status">Usa las probabilidades ya calculadas; no vuelve a procesar el video.</p>
+                </aside>
+            </div>
+
+            <section class="compare-timelines-panel" aria-labelledby="compare-timelines-title">
+                <div class="compare-timelines-heading">
+                    <div>
+                        <h4 id="compare-timelines-title">Timelines alineados</h4>
+                        <p>Hacé clic en cualquier marca para ir a ese momento del video.</p>
+                    </div>
+                    <div class="compare-timeline-legend" aria-label="Colores del timeline">
+                        <span class="line">Line</span>
+                        <span class="scrum">Scrum</span>
+                        <span class="pending">Pendiente</span>
+                        <label class="compare-manual-other-toggle"><input id="compare-show-manual-other" type="checkbox"> Mostrar otro real</label>
+                    </div>
+                </div>
+                <div id="compare-model-timelines" class="compare-model-timelines"></div>
+                <div id="compare-manual-timeline" class="compare-manual-timeline" hidden>
+                    <div class="compare-timeline-label">
+                        <strong>3 · Etiquetado real</strong>
+                        <span><span id="compare-manual-summary"></span> · <a id="compare-manual-link" href="/clip-generator">Abrir generación</a></span>
+                    </div>
+                    <div id="compare-manual-track" class="compare-timeline-track manual" aria-label="Timeline real del generador de clips"></div>
+                </div>
+            </section>
+
+            <details class="compare-secondary-results">
+                <summary>Ver métricas, detecciones y gráficos</summary>
+                <div class="comparison-table-container">
+                    <table id="comparison-table" class="comparison-table"></table>
+                </div>
+                <div id="side-by-side-detections" class="side-by-side"></div>
+                <div class="charts-grid">
+                    <div class="chart-container"><canvas id="detections-chart"></canvas></div>
+                    <div class="chart-container"><canvas id="confidence-chart"></canvas></div>
+                </div>
+            </details>
+        </div>
+    </div>
+
+    <div id="compare-model-info-modal" class="modal compare-model-info-modal" role="dialog" aria-modal="true"
+        aria-labelledby="compare-model-info-title" aria-describedby="compare-model-info-description" aria-hidden="true">
+        <div class="modal-content compare-model-info-content">
+            <div class="modal-header">
+                <div>
+                    <span id="compare-model-info-family" class="compare-featured-kicker">Arquitectura del modelo</span>
+                    <h3 id="compare-model-info-title">Detalle del modelo</h3>
+                </div>
+                <button id="compare-model-info-close" class="modal-close" type="button" aria-label="Cerrar detalle del modelo">&times;</button>
+            </div>
+            <div class="modal-body compare-model-info-body">
+                <p id="compare-model-info-description" class="compare-model-info-description"></p>
+                <div id="compare-model-info-metrics" class="compare-model-info-metrics"></div>
+                <section class="compare-architecture-panel" aria-labelledby="compare-architecture-title">
+                    <div class="compare-architecture-heading">
+                        <h4 id="compare-architecture-title">Flujo simplificado</h4>
+                        <span>Las flechas representan el recorrido de la información.</span>
+                    </div>
+                    <div id="compare-model-architecture" class="compare-model-architecture"></div>
+                    <p id="compare-model-architecture-note" class="compare-model-architecture-note"></p>
+                </section>
+                <details class="compare-model-technical-details">
+                    <summary>Ver identificación técnica</summary>
+                    <dl id="compare-model-technical-list"></dl>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="{{ url_for('static', filename='js/omission_review.js', v='omission-review-v1') }}"></script>
+    <script src="{{ url_for('static', filename='js/compare.js', v='omission-review-v1') }}"></script>
+</body>
+</html>

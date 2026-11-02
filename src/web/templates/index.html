@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detección de jugadas de rugby</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='model-recommendations-v3') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+
+    <div class="container main-content">
+        <div class="analysis-workspace">
+            <div class="analysis-primary">
+                <div class="section compact-section">
+                    <div class="section-header">
+                        <h2>1. Elegir modelo</h2>
+                        <button id="refresh-models" class="btn btn-secondary">Actualizar</button>
+                    </div>
+                    <div class="selection-toolbar" aria-label="Filtros de modelos">
+                        <label class="search-field">
+                            <span class="sr-only">Buscar modelo</span>
+                            <input id="model-search" type="search" placeholder="Buscar modelo..." autocomplete="off">
+                        </label>
+                        <select id="model-filter" aria-label="Filtrar modelos">
+                            <option value="recommended">Recomendados</option>
+                            <option value="all">Todos los modelos</option>
+                            <option value="live">Livianos para CPU</option>
+                            <option value="ensemble">Ensembles</option>
+                            <option value="meta_correction">Corrector</option>
+                        </select>
+                        <span id="model-results-count" class="selection-meta" aria-live="polite"></span>
+                    </div>
+                    <div id="models-grid" class="models-grid compact-grid">
+                        <div class="loading">Cargando modelos...</div>
+                    </div>
+                </div>
+
+                <div class="section compact-section">
+                    <div class="section-header">
+                        <h2>2. Elegir video</h2>
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="library">Biblioteca</button>
+                            <button class="tab-btn" data-tab="processed">Procesados</button>
+                            <button class="tab-btn" data-tab="upload">Subir</button>
+                        </div>
+                    </div>
+                    <div class="selection-toolbar" id="video-filter-toolbar" aria-label="Filtros de videos">
+                        <label class="search-field">
+                            <span class="sr-only">Buscar video</span>
+                            <input id="video-search" type="search" placeholder="Buscar por nombre u origen..." autocomplete="off">
+                        </label>
+                        <select id="video-source-filter" aria-label="Filtrar videos por origen">
+                            <option value="all">Todos los orígenes</option>
+                            <option value="pablo granitto">Pablo Granitto</option>
+                            <option value="juan manuel arriazu">Juan Manuel Arriazu</option>
+                            <option value="final_tests">Pruebas finales</option>
+                            <option value="web_downloads">Pruebas externas</option>
+                            <option value="local">Archivos locales</option>
+                        </select>
+                        <span id="video-results-count" class="selection-meta" aria-live="polite"></span>
+                    </div>
+
+                    <div id="library-tab" class="tab-content active">
+                        <div id="videos-grid" class="videos-grid compact-grid">
+                            <div class="loading">Cargando videos...</div>
+                        </div>
+                    </div>
+
+                    <div id="processed-tab" class="tab-content">
+                        <div id="processed-videos-grid" class="videos-grid compact-grid">
+                            <div class="loading">Cargando videos procesados...</div>
+                        </div>
+                    </div>
+
+                    <div id="upload-tab" class="tab-content">
+                        <div class="upload-zone compact-upload" id="upload-zone">
+                            <div class="upload-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="16 16 12 12 8 16"></polyline>
+                                    <line x1="12" y1="12" x2="12" y2="21"></line>
+                                    <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+                                </svg>
+                            </div>
+                            <p class="upload-text">Arrastrá un video hasta aquí</p>
+                            <label for="file-input" class="btn btn-primary">Elegir archivo</label>
+                            <input type="file" id="file-input" accept="video/mp4,video/avi,video/quicktime" hidden>
+                            <p class="upload-hint">MP4, AVI, MOV. Max: 500MB.</p>
+                        </div>
+                        <div id="upload-progress" class="upload-progress" style="display:none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                            <p id="upload-status">Uploading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="analysis-sidebar">
+                <div id="parameters-section" class="section compact-section sticky-panel">
+                    <div class="section-header">
+                        <h2>3. Parámetros</h2>
+                        <button id="reset-params" class="btn btn-secondary">Restablecer</button>
+                    </div>
+
+                    <div class="parameters-grid sidebar-parameters">
+                        <div class="param-group">
+                            <label for="confidence-threshold">
+                                Confianza mínima
+                                <span class="param-value" id="confidence-value">0.70</span>
+                            </label>
+                            <input type="range" id="confidence-threshold" min="0" max="1" step="0.05" value="0.70">
+                            <p class="param-description">Confianza mínima para informar una jugada.</p>
+                        </div>
+
+                        <div class="param-group" id="line-threshold-group">
+                            <label for="line-confidence-threshold">
+                                Umbral mínimo para line
+                                <span class="param-value" id="line-confidence-value">0.95</span>
+                            </label>
+                            <input type="range" id="line-confidence-threshold" min="0" max="1" step="0.05" value="0.95">
+                            <p class="param-description" id="line-threshold-description">Se aplica solo a line antes de fusionar ventanas. Scrum conserva la confianza mínima general.</p>
+                        </div>
+
+                        <details class="advanced-details">
+                            <summary>Opciones avanzadas</summary>
+                            <div class="param-group">
+                                <label for="batch-size">
+                                    Tamaño del lote
+                                    <span class="param-value" id="batch-value">8</span>
+                                </label>
+                                <input type="range" id="batch-size" min="1" max="32" step="1" value="8">
+                                <p class="param-description">Los valores altos pueden acelerar el análisis, pero usan más memoria.</p>
+                            </div>
+
+                            <div class="param-group">
+                                <label for="temporal-fps-mode">Muestreo temporal</label>
+                                <select id="temporal-fps-mode">
+                                    <option value="training_match_25" selected>Igual al entrenamiento (25 FPS)</option>
+                                    <option value="fast_12">Rápido (12 FPS)</option>
+                                    <option value="custom">FPS personalizados</option>
+                                </select>
+                                <input id="custom-effective-fps" type="number" min="1" max="30" step="1" value="25" style="display:none; margin-top:0.5rem;">
+                                <p class="param-description">Usá el modo rápido para reducir el costo en videos largos.</p>
+                            </div>
+                        </details>
+                    </div>
+
+                    <div class="analysis-actions">
+                        <button id="preview-preprocessing" class="btn btn-secondary btn-large" disabled>
+                            Previsualizar procesamiento
+                        </button>
+                        <button id="run-analysis" class="btn btn-primary btn-large" disabled>
+                            Analizar video
+                        </button>
+                    </div>
+                    <section id="analysis-progress" class="analysis-progress" hidden aria-live="polite">
+                        <div class="analysis-progress-header">
+                            <strong id="analysis-progress-stage">Preparando análisis</strong>
+                            <span id="analysis-progress-percent">0%</span>
+                        </div>
+                        <div id="analysis-progress-track" class="analysis-progress-track"
+                             role="progressbar" aria-label="Progreso del análisis"
+                             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                            <div id="analysis-progress-fill" class="analysis-progress-fill"></div>
+                        </div>
+                        <p id="analysis-progress-message" class="analysis-progress-message">Iniciando...</p>
+                        <p id="analysis-progress-time" class="analysis-progress-time">Transcurrido 0:00</p>
+                    </section>
+                    <p id="validation-message" class="validation-message">Elegí un modelo</p>
+                </div>
+            </aside>
+        </div>
+
+        <div id="preprocessing-modal" class="modal" style="display: none;">
+            <div class="modal-content preview-modal-content">
+                <div class="modal-header">
+                    <h3>Previsualización del campo visual</h3>
+                    <button class="modal-close" onclick="closePreprocessingModal()" aria-label="Cerrar previsualización">x</button>
+                </div>
+                <div class="modal-body preview-modal-body">
+                    <div id="preview-video-container" class="model-roi-stage">
+                        <video id="preview-video" controls>
+                            Tu navegador no puede reproducir este video.
+                        </video>
+                        <div id="preview-model-roi" class="model-roi-overlay" aria-hidden="true">
+                            <span>Área clasificada</span>
+                        </div>
+                    </div>
+                    <div class="preview-toolbar">
+                        <label class="model-roi-toggle" for="show-preview-model-roi">
+                            <input type="checkbox" id="show-preview-model-roi" checked>
+                            Mostrar el campo visual del modelo
+                        </label>
+                        <span>El interior se transforma en RGB 224×224; el modelo recomendado también usa esa misma área directamente en YOLO 640×640.</span>
+                    </div>
+                    <details class="preview-details">
+                        <summary>Ver cómo se obtiene la entrada del modelo</summary>
+                        <p class="info-text">El video se mantiene en su formato original y el recuadro marca exactamente la región que recibe el modelo.</p>
+                        <div id="preprocessing-steps" class="preprocessing-steps"></div>
+                    </details>
+                </div>
+            </div>
+        </div>
+
+        <div id="results-section" class="section" style="display:none;">
+            <div class="section-header">
+                <h2>Resultados</h2>
+                    <div class="results-actions">
+                        <button id="start-review" class="btn btn-primary">Revisión humana</button>
+                        <button id="start-review-non-overlap" class="btn btn-secondary">Revisión por bloques (sin solapamiento)</button>
+                        <button id="start-review-full-match" class="btn btn-secondary">Revisar partido completo</button>
+                        <button id="export-json" class="btn btn-secondary">Exportar JSON</button>
+                    <button id="export-csv" class="btn btn-secondary">Exportar CSV</button>
+                    <button id="view-timeline" class="btn btn-primary">Abrir vista de revisión</button>
+                </div>
+            </div>
+
+            <div id="results-meta-header" style="display:none; margin-bottom:12px; padding:10px 16px;
+                background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; color:#1e40af;">
+            </div>
+
+            <div class="results-summary" id="results-summary"></div>
+
+            <section id="results-threshold-controls" class="results-threshold-controls" hidden
+                aria-labelledby="results-threshold-title">
+                <div class="results-threshold-heading">
+                    <div>
+                        <span class="results-threshold-kicker">Después de clasificar</span>
+                        <h3 id="results-threshold-title">Ajustar detecciones</h3>
+                        <p>Recalcula las jugadas desde las probabilidades ya guardadas; no vuelve a procesar el video.</p>
+                    </div>
+                    <button id="results-threshold-reset" class="btn btn-secondary" type="button">Restablecer valores iniciales</button>
+                </div>
+                <div class="results-threshold-grid">
+                    <label class="results-threshold-control" for="results-confidence-threshold">
+                        <span><strong>Confianza mínima</strong><output id="results-confidence-value">0.70</output></span>
+                        <input type="range" id="results-confidence-threshold" min="0" max="1" step="0.01" value="0.70">
+                        <small>Se aplica a scrum y funciona como piso general.</small>
+                    </label>
+                    <label class="results-threshold-control" for="results-line-confidence-threshold">
+                        <span><strong>Umbral mínimo para line</strong><output id="results-line-confidence-value">0.95</output></span>
+                        <input type="range" id="results-line-confidence-threshold" min="0" max="1" step="0.01" value="0.95">
+                        <small>Se aplica a line antes de agrupar las ventanas.</small>
+                    </label>
+                </div>
+                <p id="results-threshold-status" class="results-threshold-status" aria-live="polite"></p>
+            </section>
+
+            <div id="results-replay-shell" class="results-replay-shell" style="display:none;">
+                <div class="results-replay-layout">
+                    <div class="results-replay-video-panel">
+                        <div class="results-replay-panel-header">
+                            <div>
+                                <h3>Reproducción integrada</h3>
+                                <p>Revisá el video, la línea de tiempo y la detección activa sin salir de esta pantalla.</p>
+                            </div>
+                            <div class="results-replay-header-actions">
+                                <div id="results-replay-status" class="results-replay-status empty">Sin detección activa</div>
+                                <button id="results-replay-focus-toggle" class="btn btn-secondary" type="button">
+                                    Vista amplia
+                                </button>
+                            </div>
+                        </div>
+                        <div id="results-replay-roi-stage" class="model-roi-stage">
+                            <video id="results-replay-video" controls controlslist="nofullscreen" preload="auto" playsinline>
+                                Tu navegador no puede reproducir este video.
+                            </video>
+                            <div id="results-replay-model-roi" class="model-roi-overlay" aria-hidden="true">
+                                <span>Área usada por el modelo</span>
+                            </div>
+                        </div>
+                        <div id="results-replay-video-message" class="results-replay-video-message" aria-live="polite">
+                            Cargando video...
+                        </div>
+                        <div class="results-replay-controls">
+                            <button id="results-replay-play-pause" class="btn btn-secondary">Reproducir/Pausar</button>
+                            <span id="results-replay-current-time">0:00</span>
+                            <input type="range" id="results-replay-seek" min="0" max="0" step="0.1" value="0">
+                            <span id="results-replay-duration">0:00</span>
+                            <button id="results-replay-fullscreen" class="btn btn-secondary">Pantalla completa</button>
+                            <label class="model-roi-toggle" for="show-results-replay-model-roi">
+                                <input type="checkbox" id="show-results-replay-model-roi" checked>
+                                Mostrar área de clasificación
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="results-replay-stats-panel">
+                        <h3>Contexto de reproducción</h3>
+                        <div id="results-replay-stats" class="results-replay-stats"></div>
+                    </div>
+                </div>
+
+                <div class="results-replay-timeline-panel">
+                    <div class="results-replay-panel-header compact">
+                        <div>
+                            <h3>Timeline</h3>
+                            <p>Hacé clic para ir directamente a un momento detectado.</p>
+                        </div>
+                        <button id="results-replay-clip-labels-toggle" class="btn btn-secondary results-replay-clip-toggle"
+                            type="button" aria-expanded="false" hidden>
+                            Mostrar etiquetas reales
+                        </button>
+                    </div>
+                    <div id="results-replay-class-toggles" class="results-replay-class-toggles"></div>
+                    <div class="results-replay-timeline-container">
+                        <canvas id="results-replay-timeline"></canvas>
+                        <div id="results-replay-clip-labels" class="results-replay-clip-labels" hidden>
+                            <div class="results-replay-clip-labels-header">
+                                <strong>Etiquetas reales del generador de clips</strong>
+                                <span id="results-replay-clip-labels-summary"></span>
+                                <a id="results-replay-clip-labels-link" href="/clip-generator">Abrir generación</a>
+                            </div>
+                            <canvas id="results-replay-clip-labels-timeline"
+                                aria-label="Timeline de etiquetas reales del generador de clips"></canvas>
+                        </div>
+                    </div>
+                    <div class="results-replay-legend">
+                        <span class="legend-item"><span class="badge scrum"></span> Scrum</span>
+                        <span class="legend-item"><span class="badge line"></span> Line</span>
+                        <span class="legend-item"><span class="badge other"></span> Other</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="detections-filter" style="display:none;"></div>
+            <div class="detections-list" id="detections-list"></div>
+        </div>
+    </div>
+
+    <div id="history-modal" class="modal" style="display:none;">
+        <div class="modal-content history-modal-content">
+            <div class="modal-header">
+                <h3>Historial de análisis</h3>
+                <button class="modal-close" onclick="closeHistoryModal()" aria-label="Cerrar historial">x</button>
+            </div>
+            <div class="modal-body">
+                <div id="history-list" style="overflow-x:auto;">
+                    <div class="loading">Cargando historial...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="about-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Cerrar información">x</button>
+            <h2>About This Project</h2>
+            <p>This is a thesis project for automated detection and classification of rugby plays from video footage.</p>
+            <h3>Play Categories</h3>
+            <ul>
+                <li><strong>Scrum:</strong> Set-piece where forwards pack together</li>
+                <li><strong>Line:</strong> Lineout throws from the sideline</li>
+                <li><strong>Other:</strong> All other plays (open play, kicks, tries, etc.)</li>
+            </ul>
+            <h3>How It Works</h3>
+            <ol>
+                <li>Select a trained model from available options</li>
+                <li>Choose a video from the library or upload a new one</li>
+                <li>Adjust detection parameters to fine-tune results</li>
+                <li>Ejecutar el análisis y revisar las jugadas detectadas en un timeline</li>
+            </ol>
+            <p class="modal-footer">Desarrollado para la tesina académica · 2026</p>
+        </div>
+    </div>
+
+    <div id="clip-modal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Cerrar reproductor">x</button>
+            <h2 class="modal-title">Reproducir fragmento</h2>
+            <p id="clip-info" style="color: #666; font-size: 14px; margin-bottom: 10px;"></p>
+            <video id="clip-video" controls style="width: 100%; max-height: 60vh; border-radius: 8px; background: #000;">
+                Tu navegador no puede reproducir este video.
+            </video>
+            <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                El fragmento muestra la jugada detectada y se detiene automáticamente al finalizar.
+            </p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/model-roi-overlay.js', v='reference-height-360-v3') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js', v='consolidated-manual-labels-v1') }}"></script>
+</body>
+</html>

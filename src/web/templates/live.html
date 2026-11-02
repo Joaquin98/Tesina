@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detección progresiva de jugadas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='ux-consistency-v2') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+
+    <div class="container main-content">
+        <div class="analysis-workspace">
+            <div class="analysis-primary">
+                <div class="section compact-section">
+                    <div class="section-header">
+                        <h2>1. Elegir modelo</h2>
+                        <button id="refresh-models" class="btn btn-secondary">Actualizar</button>
+                    </div>
+                    <div class="selection-toolbar" aria-label="Filtros de modelos">
+                        <label class="search-field"><span class="sr-only">Buscar modelo</span><input id="model-search" type="search" placeholder="Buscar modelo..." autocomplete="off"></label>
+                        <select id="model-filter" aria-label="Filtrar modelos">
+                            <option value="recommended">Recomendados</option>
+                            <option value="all">Todos los modelos</option>
+                            <option value="live">Livianos para CPU</option>
+                            <option value="ensemble">Ensembles</option>
+                        </select>
+                        <span id="model-results-count" class="selection-meta" aria-live="polite"></span>
+                    </div>
+                    <div id="models-grid" class="models-grid compact-grid">
+                        <div class="loading">Cargando modelos...</div>
+                    </div>
+                </div>
+
+                <div class="section compact-section">
+                    <div class="section-header">
+                        <h2>2. Elegir video</h2>
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="library">Biblioteca</button>
+                            <button class="tab-btn" data-tab="processed">Procesados</button>
+                            <button class="tab-btn" data-tab="upload">Subir</button>
+                        </div>
+                    </div>
+                    <div class="selection-toolbar" id="video-filter-toolbar" aria-label="Filtros de videos">
+                        <label class="search-field"><span class="sr-only">Buscar video</span><input id="video-search" type="search" placeholder="Buscar por nombre u origen..." autocomplete="off"></label>
+                        <select id="video-source-filter" aria-label="Filtrar videos por origen">
+                            <option value="all">Todos los orígenes</option>
+                            <option value="pablo granitto">Pablo Granitto</option>
+                            <option value="juan manuel arriazu">Juan Manuel Arriazu</option>
+                            <option value="final_tests">Pruebas finales</option>
+                            <option value="web_downloads">Pruebas externas</option>
+                            <option value="local">Archivos locales</option>
+                        </select>
+                        <span id="video-results-count" class="selection-meta" aria-live="polite"></span>
+                    </div>
+
+                    <div id="library-tab" class="tab-content active">
+                        <div id="videos-grid" class="videos-grid compact-grid">
+                            <div class="loading">Cargando videos...</div>
+                        </div>
+                    </div>
+
+                    <div id="processed-tab" class="tab-content">
+                        <div id="processed-videos-grid" class="videos-grid compact-grid">
+                            <div class="loading">Cargando videos procesados...</div>
+                        </div>
+                    </div>
+
+                    <div id="upload-tab" class="tab-content">
+                        <div class="upload-zone compact-upload" id="upload-zone">
+                            <p class="upload-text">Arrastrá un video hasta aquí</p>
+                            <label for="file-input" class="btn btn-primary">Elegir archivo</label>
+                            <input type="file" id="file-input" accept="video/mp4,video/avi,video/quicktime" hidden>
+                            <p class="upload-hint">MP4, AVI, MOV. Max: 500MB.</p>
+                        </div>
+                        <div id="upload-progress" class="upload-progress" style="display:none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                            <p id="upload-status">Uploading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <aside class="analysis-sidebar">
+                <div id="parameters-section" class="section compact-section sticky-panel">
+                    <div class="section-header">
+                        <h2>Configuración</h2>
+                        <button id="reset-params" class="btn btn-secondary">Restablecer</button>
+                    </div>
+                    <div class="parameters-grid sidebar-parameters">
+                        <div class="param-group">
+                            <label for="confidence-threshold">
+                                Confianza mínima
+                                <span class="param-value" id="confidence-value">0.70</span>
+                            </label>
+                            <input type="range" id="confidence-threshold" min="0" max="1" step="0.05" value="0.70">
+                            <p class="param-description">Confianza mínima para contar una detección.</p>
+                        </div>
+
+                        <div class="param-group">
+                            <label for="line-confidence-threshold">
+                                Umbral mínimo para line
+                                <span class="param-value" id="line-confidence-value">0.95</span>
+                            </label>
+                            <input type="range" id="line-confidence-threshold" min="0" max="1" step="0.05" value="0.95">
+                            <p class="param-description">Filtra line de forma independiente; scrum usa el umbral general.</p>
+                        </div>
+
+                        <details class="advanced-details">
+                            <summary>Parámetros técnicos</summary>
+                            <div class="param-group">
+                                <label for="batch-size">
+                                    Tamaño del lote
+                                    <span class="param-value" id="batch-value">8</span>
+                                </label>
+                                <input type="range" id="batch-size" min="1" max="32" step="1" value="8">
+                            </div>
+                            <div class="param-group">
+                                <label for="temporal-fps-mode">Muestreo temporal</label>
+                                <select id="temporal-fps-mode">
+                                    <option value="training_match_25" selected>Igual al entrenamiento (25 FPS)</option>
+                                    <option value="fast_12">Rápido (12 FPS)</option>
+                                    <option value="custom">FPS personalizados</option>
+                                </select>
+                                <input id="custom-effective-fps" type="number" min="1" max="30" step="1" value="25" style="display:none; margin-top:0.5rem;">
+                            </div>
+                        </details>
+                    </div>
+                    <div class="analysis-actions">
+                        <button id="preview-preprocessing" class="btn btn-secondary btn-large" disabled>
+                            Previsualizar procesamiento
+                        </button>
+                    </div>
+                    <p id="validation-message" class="validation-message">Elegí un modelo</p>
+                </div>
+            </aside>
+        </div>
+
+        <div id="live-detection-section" class="section">
+            <div class="section-header">
+                <h2>3. Detección progresiva</h2>
+            </div>
+            <p class="live-help-text">
+                Recorre el video de manera progresiva y actualiza las predicciones mientras avanza.
+            </p>
+            <div class="live-layout">
+                <div class="live-video-panel">
+                    <div class="live-panel-header">
+                        <h3>Video de origen</h3>
+                        <span id="live-video-context">Elegí un modelo y un video</span>
+                    </div>
+                    <video id="live-video-preview" controls preload="metadata">
+                        Tu navegador no puede reproducir este video.
+                    </video>
+                    <div class="live-video-meta">
+                        <span><strong>Model:</strong> <span id="live-context-model">-</span></span>
+                        <span><strong>Video:</strong> <span id="live-context-video">-</span></span>
+                    </div>
+                </div>
+
+                <div class="live-ops-panel">
+                    <div class="live-panel-header">
+                        <h3>Controles de ejecución</h3>
+                    </div>
+
+                    <div class="live-params-grid">
+                        <label>
+                            Ventana (s)
+                            <input id="live-window-seconds" type="number" min="2" max="20" step="1" value="7">
+                        </label>
+                        <label>
+                            Intervalo de predicción (s)
+                            <input id="live-prediction-interval" type="number" min="0.25" max="5" step="0.25" value="1">
+                        </label>
+                        <label>
+                            Target FPS
+                            <input id="live-target-fps" type="number" min="1" max="30" step="1" value="25">
+                        </label>
+                        <label>
+                            Cuadros muestreados
+                            <input id="live-sampled-frame-count" type="number" min="0" max="200" step="1" value="0">
+                        </label>
+                        <label class="live-checkbox-label">
+                            <input id="live-simulate-realtime" type="checkbox" checked>
+                            Simular ritmo de reproducción
+                        </label>
+                    </div>
+
+                    <div class="live-controls-row">
+                        <button id="use-light-live-model" class="btn btn-secondary" disabled>Configuración rápida para CPU</button>
+                        <button id="start-live-detection" class="btn btn-primary" disabled>Iniciar detección</button>
+                        <button id="stop-live-detection" class="btn btn-secondary" disabled>Detener</button>
+                        <button id="refresh-live-status" class="btn btn-secondary" disabled>Actualizar estado</button>
+                    </div>
+
+                    <div id="live-status-card" class="live-status-card">
+                        <div><strong>Estado:</strong> <span id="live-status-text">En espera</span></div>
+                        <div><strong>Ejecución:</strong> <span id="live-job-id">-</span></div>
+                        <div><strong>Progreso:</strong> <span id="live-progress-text">0%</span></div>
+                        <div><strong>Tiempo procesado:</strong> <span id="live-processed-time">0:00 / 0:00</span></div>
+                        <div><strong>Detecciones:</strong> <span id="live-detections-count">0</span></div>
+                    </div>
+
+                    <div class="live-progress-shell">
+                        <div class="live-progress-track">
+                            <div id="live-progress-fill" class="live-progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="live-latest-box">
+                        <h4>Última predicción</h4>
+                        <p id="live-latest-prediction">-</p>
+                        <p id="live-latest-probs" class="live-latest-probs">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="live-history-panel">
+                <div class="live-panel-header compact">
+                    <h3>Recent Prediction Stream</h3>
+                    <span id="live-history-note">No predictions yet</span>
+                </div>
+                <div id="live-prediction-history" class="live-prediction-history">
+                    <div class="live-history-empty">Run a live job to see prediction updates over time.</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="preprocessing-modal" class="modal" style="display: none;">
+            <div class="modal-content preview-modal-content">
+                <div class="modal-header">
+                    <h3>Previsualización del campo visual</h3>
+                    <button class="modal-close" onclick="closePreprocessingModal()" aria-label="Cerrar previsualización">x</button>
+                </div>
+                <div class="modal-body preview-modal-body">
+                    <div id="preview-video-container" class="model-roi-stage">
+                        <video id="preview-video" controls>
+                            Tu navegador no puede reproducir este video.
+                        </video>
+                        <div id="preview-model-roi" class="model-roi-overlay" aria-hidden="true">
+                            <span>Área clasificada</span>
+                        </div>
+                    </div>
+                    <div class="preview-toolbar">
+                        <label class="model-roi-toggle" for="show-preview-model-roi">
+                            <input type="checkbox" id="show-preview-model-roi" checked>
+                            Mostrar el campo visual del modelo
+                        </label>
+                        <span>Solo el interior del recuadro se transforma en 224×224.</span>
+                    </div>
+                    <details class="preview-details">
+                        <summary>Ver cómo se obtiene la entrada del modelo</summary>
+                        <p class="info-text">El video se mantiene en su formato original y el recuadro marca exactamente la región que recibe el modelo.</p>
+                        <div id="preprocessing-steps" class="preprocessing-steps"></div>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/model-roi-overlay.js', v='reference-height-360-v2') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js', v='ux-consistency-v2') }}"></script>
+</body>
+</html>

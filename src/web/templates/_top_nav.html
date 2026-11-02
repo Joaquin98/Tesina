@@ -1,0 +1,25 @@
+{% set current_path = request.path %}
+<nav class="navbar">
+    <div class="container">
+        <a class="nav-brand" href="/" aria-label="Ir a Analizar">
+            <h1>Detección de jugadas</h1>
+            <p>Herramientas de análisis de rugby</p>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="{% if current_path == '/' %}active{% endif %}">Analizar</a>
+            <a href="/live" id="live-link" class="{% if current_path == '/live' %}active{% endif %}">En vivo</a>
+            <a href="/clip-generator" id="clip-generator-link" class="{% if current_path == '/clip-generator' %}active{% endif %}">Generar clips</a>
+            <a href="/compare" class="{% if current_path == '/compare' %}active{% endif %}">Comparar</a>
+            <details class="nav-more">
+                <summary>Más</summary>
+                <div class="nav-more-menu">
+                    <a href="/training-clips" class="{% if current_path == '/training-clips' %}active{% endif %}">Clips del dataset</a>
+                    <a href="/training-dataset" id="training-dataset-link" class="{% if current_path == '/training-dataset' %}active{% endif %}">Conjunto revisado</a>
+                    <a href="/training-results" class="{% if current_path == '/training-results' %}active{% endif %}">Modelos y corridas</a>
+                    <a href="/?open=history" id="history-link">Historial</a>
+                    <a href="/?open=about" id="about-link">Acerca del proyecto</a>
+                </div>
+            </details>
+        </div>
+    </div>
+</nav>

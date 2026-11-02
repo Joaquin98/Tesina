@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar clips etiquetados</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='clip-label-status-v4') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+
+    <main class="container main-content clip-generator-shell">
+        <section class="section clip-generator-header">
+            <div>
+                <span class="section-kicker">Preparación del dataset</span>
+                <h2>Generar clips etiquetados</h2>
+                <p>Elegí un video y clasificá cada bloque consecutivo de 7 segundos. Al marcar una clase, el siguiente fragmento comienza automáticamente.</p>
+            </div>
+            <div class="clip-generator-header-meta" aria-label="Características del flujo">
+                <strong>7 segundos</strong>
+                <span>por fragmento</span>
+            </div>
+        </section>
+
+        <section id="clip-generator-setup" class="section clip-generator-setup">
+            <div class="section-header clip-generator-section-header">
+                <div>
+                    <h3>1. Elegí el video</h3>
+                    <p class="review-help">Se muestran los videos disponibles en la biblioteca y en cargas recientes.</p>
+                </div>
+                <span id="clip-generator-video-count" class="selection-meta">Cargando...</span>
+            </div>
+
+            <div class="clip-generator-setup-grid">
+                <div>
+                    <div class="clip-generator-filter-row">
+                        <label class="search-field clip-generator-search">
+                            <span>Buscar video</span>
+                            <input id="clip-generator-search" type="search" placeholder="Nombre o carpeta..." autocomplete="off">
+                        </label>
+                        <label class="clip-generator-source-filter">
+                            <span>Origen</span>
+                            <select id="clip-generator-source-filter">
+                                <option value="all">Todos los orígenes</option>
+                                <option value="pablo granitto">Pablo Granitto</option>
+                                <option value="juan manuel arriazu">Juan Manuel Arriazu</option>
+                                <option value="final_tests" selected>Pruebas finales</option>
+                                <option value="web_downloads">Pruebas externas</option>
+                                <option value="local">Archivos locales</option>
+                            </select>
+                        </label>
+                        <label class="clip-generator-source-filter">
+                            <span>Etiquetado</span>
+                            <select id="clip-generator-label-filter">
+                                <option value="all">Todos los estados</option>
+                                <option value="labeled">Con etiquetas</option>
+                                <option value="complete">Completos</option>
+                                <option value="in_progress">En progreso</option>
+                                <option value="unlabeled">Sin etiquetas</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div id="clip-generator-video-list" class="clip-generator-video-list" aria-live="polite">
+                        <div class="loading">Cargando videos...</div>
+                    </div>
+                </div>
+
+                <aside class="clip-generator-start-card">
+                    <div>
+                        <span class="section-kicker">Destino</span>
+                        <h3>2. Definí el conjunto</h3>
+                        <p class="review-help">Los clips conservan la resolución fuente y se guardan a 25 FPS. RGB y YOLO aplican después su propia normalización espacial.</p>
+                        <div class="clip-generator-pipeline-note">
+                            <strong>Preprocesamiento al cargar</strong>
+                            <span>RGB: escala adaptativa según la resolución → 224×224.</span>
+                            <span>YOLO: ROI equivalente desde la fuente → 640×640.</span>
+                        </div>
+                    </div>
+
+                    <fieldset class="clip-generator-split" aria-label="Destino del dataset">
+                        <label>
+                            <input type="radio" name="dataset-split" value="train" checked>
+                            <span><strong>Entrenamiento</strong><small>Para entrenar o ajustar el modelo</small></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="dataset-split" value="test">
+                            <span><strong>Prueba</strong><small>Para evaluación independiente</small></span>
+                        </label>
+                    </fieldset>
+
+                    <div id="clip-generator-selection" class="clip-generator-selection">Todavía no seleccionaste un video.</div>
+                    <button id="clip-generator-start" class="btn btn-primary" type="button" disabled>Empezar a etiquetar</button>
+                    <p id="clip-generator-start-message" class="review-help" aria-live="polite"></p>
+                </aside>
+            </div>
+        </section>
+
+        <section id="clip-generator-workspace" class="section clip-generator-workspace" hidden>
+            <div class="clip-generator-progress-row">
+                <div>
+                    <span id="clip-generator-split-badge" class="training-split-badge train">Training</span>
+                    <h2 id="clip-generator-current-title">Clip 1</h2>
+                    <p id="clip-generator-current-time" class="review-help">0:00–0:07</p>
+                </div>
+                <div class="clip-generator-progress-copy">
+                    <strong id="clip-generator-progress-count">0 de 0 etiquetados</strong>
+                    <span id="clip-generator-progress-percent">0%</span>
+                </div>
+            </div>
+
+            <div class="clip-generator-track" aria-label="Progreso de etiquetado">
+                <div id="clip-generator-track-fill" class="clip-generator-track-fill"></div>
+                <div id="clip-generator-track-cursor" class="clip-generator-track-cursor"></div>
+            </div>
+
+            <section id="clip-generator-comparison" class="clip-generator-comparison" aria-labelledby="clip-generator-comparison-title">
+                <div class="clip-generator-comparison-header">
+                    <div>
+                        <span class="section-kicker">Comparación temporal</span>
+                        <h3 id="clip-generator-comparison-title">Predicciones vs. tus etiquetas</h3>
+                        <p id="clip-generator-comparison-meta" class="review-help">Buscando un análisis previo para este video...</p>
+                    </div>
+                    <div class="clip-generator-comparison-actions">
+                        <label id="clip-generator-analysis-picker" class="clip-generator-analysis-picker" hidden>
+                            <span>Predicción guardada</span>
+                            <select id="clip-generator-analysis-select" aria-label="Predicción guardada para comparar"></select>
+                        </label>
+                        <a id="clip-generator-analysis-link" class="btn btn-secondary" href="#" target="_blank" rel="noopener" hidden>Abrir análisis</a>
+                    </div>
+                </div>
+
+                <div id="clip-generator-comparison-empty" class="clip-generator-comparison-empty">Buscando análisis...</div>
+                <div id="clip-generator-comparison-content" class="clip-generator-comparison-content">
+                    <div id="clip-generator-prediction-row" class="clip-generator-timeline-row" hidden>
+                        <strong>Predicción</strong>
+                        <canvas id="clip-generator-prediction-timeline" height="32" aria-label="Timeline de predicciones del modelo"></canvas>
+                    </div>
+                    <div class="clip-generator-timeline-row">
+                        <strong>Tus etiquetas</strong>
+                        <canvas id="clip-generator-label-timeline" height="32" aria-label="Timeline de etiquetas manuales"></canvas>
+                    </div>
+                    <div class="clip-generator-comparison-footer">
+                        <div class="clip-generator-timeline-legend" aria-label="Clases del timeline">
+                            <span class="line">Line</span>
+                            <span class="scrum">Scrum</span>
+                            <span class="other">Other</span>
+                            <span class="pending">Pendiente</span>
+                        </div>
+                        <strong id="clip-generator-comparison-score">Todavía no hay etiquetas para comparar.</strong>
+                    </div>
+                </div>
+            </section>
+
+            <div class="clip-generator-main-grid">
+                <div class="clip-generator-player-column">
+                    <video id="clip-generator-video" controls controlslist="nofullscreen" preload="metadata"></video>
+                    <div class="clip-generator-player-actions">
+                        <button id="clip-generator-replay" class="btn btn-secondary" type="button">Repetir fragmento</button>
+                        <button id="clip-generator-fullscreen" class="btn btn-secondary" type="button">Pantalla completa</button>
+                        <span id="clip-generator-video-message" class="review-help" aria-live="polite"></span>
+                    </div>
+                </div>
+
+                <aside class="clip-generator-label-panel">
+                    <div>
+                        <span class="section-kicker">Clasificación</span>
+                        <h3>¿Qué tipo de jugada es?</h3>
+                        <p class="review-help">La elección se guarda y abre el próximo bloque automáticamente.</p>
+                    </div>
+
+                    <div class="clip-generator-labels">
+                        <button class="clip-label-button line" type="button" data-label="line">
+                            <strong>Line</strong><span>Tecla 1 o L</span>
+                        </button>
+                        <button class="clip-label-button scrum" type="button" data-label="scrum">
+                            <strong>Scrum</strong><span>Tecla 2 o S</span>
+                        </button>
+                        <button class="clip-label-button other" type="button" data-label="other">
+                            <strong>Other</strong><span>Tecla 3 u O</span>
+                        </button>
+                    </div>
+
+                    <div class="clip-generator-navigation">
+                        <button id="clip-generator-prev" class="btn btn-secondary" type="button">Anterior</button>
+                        <button id="clip-generator-next" class="btn btn-secondary" type="button">Siguiente pendiente</button>
+                    </div>
+
+                    <div id="clip-generator-current-label" class="clip-generator-current-label">Sin etiqueta</div>
+                    <button id="clip-generator-export" class="btn btn-primary" type="button" disabled>Guardar clips etiquetados</button>
+                    <p id="clip-generator-export-message" class="review-help" aria-live="polite"></p>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/clip_generator.js', v='clip-label-status-v4') }}"></script>
+</body>
+</html>

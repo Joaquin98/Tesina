@@ -1,0 +1,51 @@
+"""Validate saved full inference and write the measured review report."""
+import sys as _delivery_sys
+from pathlib import Path as _DeliveryPath
+_delivery_sys.dont_write_bytecode = True
+_delivery_root = next(parent for parent in _DeliveryPath(__file__).resolve().parents if (parent / 'models/source_layout.py').is_file())
+if str(_delivery_root) not in _delivery_sys.path:
+    _delivery_sys.path.insert(0, str(_delivery_root))
+from models.source_layout import experiment_directory
+from models.model_catalog import resolve_artifact as _resolve_model_artifact, artifact_glob as _model_artifact_glob, temporary_settings as _temporary_model_settings
+from pathlib import Path
+import json
+import math
+import csv
+HERE = experiment_directory(__file__)
+
+def read(name):
+    return json.loads(_resolve_model_artifact(HERE / 'results' / name).read_text(encoding='utf-8'))
+
+def elapsed(seconds):
+    return f'{int(seconds // 3600)} h {int(seconds % 3600 // 60)} min {seconds % 60:.2f} s'
+
+def main():
+    result = read('result.json')
+    timing = read('timing.json')
+    startup = read('startup.json')
+    comparison = read('historical_comparison.json')
+    completion = read('completion.json')
+    preservation = read('preservation.json')
+    alternate = read('recommended_threshold_events.json')
+    windows = result['window_predictions']
+    events = result['detections']
+    expected_samples = round(startup['duration_seconds'] * 25)
+    expected_windows = (expected_samples - 175) // 25 + 1
+    checks = {'status_success': result['status'] == 'success', 'full_source_duration': abs(result['metadata']['duration'] - 1201.2) < 1e-06, 'all_sampled_frames': timing['counts']['yolo_calls'] == expected_samples, 'all_windows': len(windows) == expected_windows == 1195, 'six_folds_per_window': timing['counts']['recurrent_calls'] == timing['counts']['forest_calls'] == 6 * len(windows), 'one_trace_each': completion['graph_trace_counts'] == [1] * 6, 'finite_normalized_probabilities': all((all((math.isfinite(v) and 0 <= v <= 1 for v in w['probabilities'].values())) and abs(sum(w['probabilities'].values()) - 1) < 1e-05 for w in windows)), 'chronological_windows': all((w['start_time'] == i and w['end_time'] == i + 7 for i, w in enumerate(windows))), 'positive_measured_inference_time': timing['inference_seconds'] > 0, 'result_timing_matches': result['metadata']['timing']['inference_seconds'] == timing['inference_seconds'], 'existing_references_preserved': preservation['all_equal']}
+    validation = {'checks': checks, 'all_pass': all(checks.values()), 'historical_comparison': comparison}
+    (HERE / 'results/final_validation.json').write_text(json.dumps(validation, indent=2, ensure_ascii=False), encoding='utf-8')
+    with _resolve_model_artifact(HERE / 'results/timings.csv').open('w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['metric', 'seconds'])
+        for key, value in timing.items():
+            if key.endswith('_seconds') and isinstance(value, (float, int)):
+                writer.writerow([key, value])
+    startup_time = startup['imports_seconds'] + startup['model_load_seconds'] + sum(startup['warmup'].values())
+    by_type = result['summary']['plays_by_type']
+    cause_section = _resolve_model_artifact(HERE / 'causa_aceleracion.md').read_text(encoding='utf-8').strip()
+    report = f"# Revisión de inferencia acelerada: VF_S01 completo\n\nSe procesaron **20 min 1.2 s de video** de la prueba final, con M1-H2-D2 y la aceleración mediante `tf.function` por fold. La inferencia completa tardó **{elapsed(timing['inference_seconds'])}** ({timing['inference_seconds']:.6f} s medidos). Las importaciones, carga y calentamiento sumaron {startup_time:.3f} s por separado.\n\nSe analizaron **{len(windows)} ventanas** de 7 s, con stride de 1 s, usando **{timing['counts']['yolo_calls']} cuadros muestreados** a 25 FPS. El resultado comparable con la ejecución anterior contiene **{len(events)} eventos**: {by_type.get('scrum', 0)} scrums y {by_type.get('line', 0)} lineouts. La vista de umbrales recomendados contiene {len(alternate['detections'])} eventos. Los eventos son predicciones: la revisión visual debe determinar aciertos, falsos positivos y omisiones.\n\n## Abrir y revisar\n\nAbrir [el revisor local](http://127.0.0.1:8766/). Si el servidor está cerrado, ejecutar `review.ps1` en esta carpeta. El video es el VF_S01 original, sin recodificar. Los botones de evento saltan 3 s antes del inicio; también se pueden consultar todas las ventanas y las probabilidades, o registrar y descargar notas de revisión. Las notas quedan en el navegador y no modifican el dataset.\n\nEl resultado principal usa los mismos umbrales que el resultado histórico: scrum 0.75 y lineout 0.80. La segunda vista usa scrum 0.45 y lineout 0.50, derivados del manifiesto y aplicados a las mismas probabilidades.\n\n## Comparación con la inferencia histórica\n\nReferencia de solo lectura: `D:/Tesina/data/results/result_20260830_064334.json`.\n\n- Ventanas históricas / nuevas: {comparison['window_counts'][0]} / {comparison['window_counts'][1]}.\n- Máxima diferencia absoluta de probabilidad: {comparison.get('max_absolute_probability_difference', 'no disponible')}.\n- Equivalencia con tolerancia absoluta 1e-6, relativa 0: {('sí' if comparison.get('probabilities_equivalent', False) else 'no')}.\n- Diferencias de clase: {comparison.get('class_differences', 'no disponible')}.\n- Diferencias de intervalo de ventana: {comparison.get('window_time_differences', 'no disponible')}.\n- Clases e intervalos de eventos iguales: {('sí' if comparison.get('event_classes_and_times_equal', False) else 'no')}.\n\nLa ejecución histórica no tiene tiempo de inferencia medido. Por eso no se calcula un factor de aceleración observado para estos 20 minutos. Los factores previamente medidos corresponden al experimento de clips `m1_h2_d2_graph_speed_20261011`; este recorrido aporta el tiempo real del segmento completo.\n\n## Tiempos medidos\n\n| Etapa | Segundos |\n| --- | ---: |\n| Inferencia completa | {timing['inference_seconds']:.3f} |\n| ResNet-50 | {timing['rgb_seconds']:.3f} |\n| YOLO | {timing['yolo_seconds']:.3f} |\n| Construcción de geometría de la secuencia | {timing['geometry_sequence_seconds']:.3f} |\n| Seis modelos duales, con funciones compiladas | {timing['recurrent_seconds']:.3f} |\n| Seis Random Forest | {timing['forest_seconds']:.3f} |\n| Preparación de ventanas y fusión | {timing['window_preparation_fusion_seconds']:.3f} |\n| Agrupación de eventos | {timing['postprocess_seconds']:.3f} |\n| Resto: decodificación, preprocesamiento y formato | {timing['rest_seconds']:.3f} |\n\nEl cronómetro cubre la llamada completa a `analyze_video`, sin reutilizar características. Incluye la pequeña instrumentación de progreso. El guardado, la comparación y la preparación del revisor son posteriores al cronómetro. La ejecución comenzó {timing['inference_start_utc']} y terminó {timing['inference_end_utc']}. La razón observada fue {timing['seconds_per_video_second']:.3f} s de procesamiento por segundo de video.\n\nHabía otra campaña de entrenamiento en CPU y se continuó bajo la carga externa activa. La carga externa quedó registrada en `logs/external_cpu_samples.jsonl`; este tiempo corresponde a esas condiciones. El tiempo total del proceso, con inicio, hashes, exportación y comprobaciones, fue {elapsed(completion['job_seconds'])}.\n\n{cause_section}\n\n## Proyección para un partido de 80 minutos\n\nActualización del 12/10/2026, posterior al envío de la tesina. Esta observación se incorpora únicamente al reporte experimental.\n\nA partir del tiempo completo medido en VF_S01, la extrapolación lineal para 80 minutos de video es:\n\n`{timing['inference_seconds']:.6f} s × (4800 s / {timing['duration_seconds']:.1f} s) = {timing['inference_seconds'] * 4800 / timing['duration_seconds']:.3f} s ≈ 5 h 19 min`.\n\nPara **M1-H2-D2 con la aceleración aplicada**, la estimación actual queda así en el orden de las cinco horas. La cifra previa de aproximadamente 28 horas debe distinguirse de este recorrido acelerado. Este resultado lo aproxima al orden de tiempo mencionado para las otras familias, aunque esta ejecución no mide una comparación completa entre familias.\n\nLa proyección se basa en un tramo de 20 min 1.2 s, con otra campaña de entrenamiento usando la CPU. Corresponde al mismo modelo, muestreo, ventanas y configuración de ejecución, bajo condiciones de carga similares. No se ejecutó aquí un partido completo de 80 minutos ni se midieron todas las variantes de M1. Las importaciones, carga y calentamiento se informan por separado y no se multiplican en esta extrapolación.\n\n## Archivos y verificaciones\n\n- `results/result.json`: resultado completo compatible con el formato web, con tiempos medidos en los metadatos.\n- `results/events.csv` y `results/windows.csv`: eventos y todas las probabilidades por ventana.\n- `results/timing.json` y `results/timings.csv`: tiempos y conteos por etapa.\n- `results/historical_comparison.json`: comparación de la ejecución completa.\n- `results/recommended_threshold_events.json`: segunda opción de umbrales.\n- `results/startup.json`: parámetros, versiones, tiempos iniciales y hashes.\n- `results/preservation.json`: hashes iguales antes y después para código, pesos, video y resultado histórico, y registro de escrituras Python.\n- `results/final_validation.json`: comprobaciones de completitud, probabilidades y ejecución compilada.\n- `infer_20min.py`: ejecución reproducible dentro de esta carpeta; rechaza sobrescribir el resultado terminado.\n\nValidación de completitud y conservación: **{('PASS' if validation['all_pass'] else 'FAIL')}**. Cada uno de los seis modelos duales tuvo {completion['graph_trace_counts']} trazados, respectivamente. La auditoría Python bloqueó escrituras externas; no intercepta llamadas nativas. Todo lo nuevo está dentro de esta carpeta.\n"
+    (HERE / 'README.md').write_text(report, encoding='utf-8')
+    print(json.dumps({'inference_seconds': timing['inference_seconds'], 'formatted': elapsed(timing['inference_seconds']), 'events': len(events), 'windows': len(windows), 'validation': validation}, ensure_ascii=False))
+    assert validation['all_pass'], validation
+if __name__ == '__main__':
+    main()

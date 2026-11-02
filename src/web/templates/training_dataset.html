@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conjunto revisado para entrenamiento</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+
+    <div class="container main-content">
+        <div id="training-dataset-section" class="section">
+            <div class="section-header">
+                <h2>Conjunto revisado</h2>
+                <button id="refresh-training-dataset" class="btn btn-secondary">Actualizar</button>
+            </div>
+            <p class="live-help-text">
+                Resumen de los fragmentos revisados por una persona. Conserva la predicción original, la clase corregida
+                y el resultado de la revisión para reutilizarlos en nuevos entrenamientos.
+            </p>
+
+            <div class="dataset-summary-grid">
+                <div class="dataset-summary-card">
+                    <span class="dataset-label">Fragmentos</span>
+                    <strong id="training-dataset-total">0</strong>
+                </div>
+                <div class="dataset-summary-card">
+                    <span class="dataset-label">Sesiones</span>
+                    <strong id="training-dataset-sessions">0</strong>
+                </div>
+                <div class="dataset-summary-card">
+                    <span class="dataset-label">Predicciones correctas</span>
+                    <strong id="training-dataset-correct">0</strong>
+                </div>
+                <div class="dataset-summary-card">
+                    <span class="dataset-label">Etiquetas corregidas</span>
+                    <strong id="training-dataset-corrected">0</strong>
+                </div>
+            </div>
+
+            <div class="dataset-layout">
+                <div class="dataset-panel">
+                    <div class="dataset-panel-header">
+                        <h3>Distribución del conjunto</h3>
+                    </div>
+                    <div class="dataset-breakdown">
+                        <h4>Etiquetas finales</h4>
+                        <div id="training-dataset-label-counts" class="dataset-count-list">Cargando...</div>
+                    </div>
+                    <div class="dataset-breakdown">
+                        <h4>Resultado de la revisión</h4>
+                        <div id="training-dataset-outcome-counts" class="dataset-count-list">Cargando...</div>
+                    </div>
+                    <div class="dataset-breakdown">
+                        <h4>Videos de origen</h4>
+                        <div id="training-dataset-origin-counts" class="dataset-origin-list">Cargando...</div>
+                    </div>
+                    <details class="technical-details">
+                        <summary>Detalles técnicos y rutas locales</summary>
+                        <div class="dataset-path-list">
+                            <div><strong>Raíz</strong> <span id="training-dataset-root">Cargando...</span></div>
+                            <div><strong>Manifiesto</strong> <span id="training-dataset-manifest">Cargando...</span></div>
+                            <div><strong>Registro</strong> <span id="training-dataset-review-log">Cargando...</span></div>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="dataset-panel">
+                    <div class="dataset-panel-header">
+                        <h3>Exportaciones recientes</h3>
+                    </div>
+                    <div id="training-dataset-recent-list" class="dataset-recent-list">
+                            <div class="dataset-empty">Todavía no hay exportaciones.</div>
+                    </div>
+                    <div class="dataset-breakdown">
+                        <h4>Fragmentos recientes</h4>
+                        <div id="training-dataset-clip-origin-list" class="dataset-recent-list">
+                            <div class="dataset-empty">Todavía no hay fragmentos.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

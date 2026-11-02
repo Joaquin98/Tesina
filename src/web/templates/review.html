@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revisión humana de detecciones</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+
+    <div class="container main-content review-shell">
+        <div class="section review-header-card">
+            <div>
+                <h2>Revisión humana</h2>
+                <p id="review-intro-text">Revisá las detecciones, corregí su clase y prepará fragmentos para futuros entrenamientos.</p>
+                <p id="review-help-text" class="review-help">La modalidad de revisión se muestra según la sesión seleccionada.</p>
+            </div>
+            <div>
+                <a href="/" class="btn btn-secondary">Volver a Analizar</a>
+            </div>
+        </div>
+
+        <div class="section">
+            <div id="review-status" class="review-empty">Cargando sesión...</div>
+            <div id="review-summary" class="review-summary-grid" style="display:none;"></div>
+        </div>
+
+        <div class="review-layout">
+            <div class="section review-panel">
+                <div id="review-empty" class="review-empty">Esperando datos de revisión...</div>
+
+                <div id="review-main" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:1rem;">
+                        <div>
+                            <h3 id="review-current-title">Detection</h3>
+                            <p id="review-current-subtitle" class="review-help"></p>
+                        </div>
+                        <div class="review-view-options">
+                            <label class="review-toggle model-roi-toggle">
+                                <input type="checkbox" id="show-review-model-roi" checked>
+                                Marcar área de clasificación
+                            </label>
+                            <label class="review-toggle">
+                                <input type="checkbox" id="show-cropped-preview">
+                                Mostrar recorte visto por el modelo
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="review-player-grid" class="review-player-grid">
+                        <div class="review-video-box">
+                            <strong>Fragmento original</strong>
+                            <div id="review-roi-stage" class="model-roi-stage">
+                                <video id="review-source-video" controls controlslist="nofullscreen" preload="metadata"></video>
+                                <div id="review-model-roi" class="model-roi-overlay" aria-hidden="true">
+                                    <span>Área usada por el modelo</span>
+                                </div>
+                            </div>
+                            <div class="review-video-actions">
+                                <small>El recuadro corresponde al campo visual normalizado que se convierte en 224×224. La reproducción está limitada al intervalo revisado.</small>
+                                <button type="button" id="review-source-fullscreen" class="btn btn-secondary">Pantalla completa</button>
+                            </div>
+                        </div>
+                        <div class="review-video-box" id="cropped-preview-box" style="display:none;">
+                            <strong>Cropped 224×224 model preview</strong>
+                            <video id="review-cropped-video" controls preload="none"></video>
+                            <small>This preview uses the same center-crop and resize path used for export.</small>
+                        </div>
+                    </div>
+
+                    <div class="review-meta-grid" id="review-meta-grid" style="margin-top:1rem;"></div>
+
+                    <div id="review-probabilities-section" style="margin-top:1rem;">
+                        <h3>Class probabilities</h3>
+                        <div id="review-probabilities" class="review-probabilities"></div>
+                    </div>
+
+                    <div class="review-controls">
+                        <button id="review-accept" class="btn btn-primary" disabled>Aceptar predicción</button>
+                        <button id="review-line" class="btn btn-secondary" disabled>Marcar line</button>
+                        <button id="review-scrum" class="btn btn-secondary" disabled>Marcar scrum</button>
+                        <button id="review-other" class="btn btn-secondary" disabled>Marcar other</button>
+                        <button id="review-no-event" class="btn btn-secondary" style="display:none;" disabled>Marcar no_event</button>
+                        <button id="review-prev" class="btn btn-secondary" disabled>Anterior</button>
+                        <button id="review-next" class="btn btn-secondary" disabled>Siguiente</button>
+                    </div>
+
+                    <p id="review-shortcuts-help" class="review-help" style="margin-top:0.8rem;">Atajos: L line, S scrum, O other, flechas para navegar.</p>
+                </div>
+            </div>
+
+            <div class="section review-panel">
+                <div class="review-export-box">
+                    <div>
+                        <h3>Cola de revisión</h3>
+                        <p class="review-help">Seleccioná una detección para revisarla o corregirla.</p>
+                    </div>
+
+                    <button id="review-export" class="btn btn-primary" disabled>Exportar fragmentos revisados</button>
+                    <div id="review-export-message" class="review-export-message"></div>
+
+                    <section id="review-exported-clips" class="review-exported-clips" style="display:none;">
+                        <h3>Clips exportados</h3>
+                        <p class="review-help">Podés reproducir los fragmentos que ya fueron guardados en el conjunto revisado.</p>
+                        <video id="review-exported-video" controls preload="metadata" style="width:100%; max-height:360px; border-radius:8px; background:#000; display:none;"></video>
+                        <div id="review-exported-clip-list" class="review-exported-clip-list"></div>
+                    </section>
+
+                    <div id="review-queue" class="review-queue"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.REVIEW_BOOTSTRAP = {
+            sessionId: {{ session_id|tojson }},
+            resultId: {{ result_id|tojson }}
+        };
+    </script>
+    <script src="{{ url_for('static', filename='js/model-roi-overlay.js', v='reference-height-360-v2') }}"></script>
+    <script src="{{ url_for('static', filename='js/review.js') }}"></script>
+</body>
+</html>

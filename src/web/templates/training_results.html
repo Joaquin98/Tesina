@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelos y corridas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/training_results.css') }}">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+    <main class="container main-content">
+        <section class="section">
+            <h2>Conjunto actual</h2>
+            <p id="dataset-summary" aria-live="polite">Cargando...</p>
+            <p>Las particiones se leen de train.csv, validation.csv y test.csv. El balanceo se aplica dentro de cada conjunto.</p>
+        </section>
+        <section class="section">
+            <h2>Modelos guardados disponibles</h2>
+            <p>Las métricas de referencia corresponden a la evaluación histórica de cada modelo; no son una evaluación nueva sobre el conjunto actual.</p>
+            <div class="table-wrapper"><table id="published" class="results-table"></table></div>
+        </section>
+        <section class="section">
+            <h2>Corridas locales de M0, M1, M2 y M3</h2>
+            <p>Se muestran las corridas completas de models/M0–M3/runs y sus métricas de validación guardadas.</p>
+            <div class="table-wrapper"><table id="local-runs" class="results-table"></table></div>
+        </section>
+        <section class="section">
+            <h2>Corridas históricas conservadas</h2>
+            <p>Datos de los manifiestos disponibles. Cada corrida conserva su protocolo y sus cantidades; los informes y gráficos externos no forman parte de esta entrega.</p>
+            <div class="table-wrapper"><table id="historical-runs" class="results-table"></table></div>
+        </section>
+        <p id="results-error" role="alert"></p>
+    </main>
+    <script>
+    function renderTable(id, rows, columns) {
+        const table = document.getElementById(id);
+        table.replaceChildren();
+        if (!rows.length) {
+            const caption = document.createElement('caption');
+            caption.textContent = 'No hay corridas completas guardadas en esta ubicación.';
+            table.append(caption);
+            return;
+        }
+        const head = table.createTHead().insertRow();
+        for (const [, title] of columns) {
+            const th = document.createElement('th');
+            th.textContent = title;
+            head.append(th);
+        }
+        const body = table.createTBody();
+        for (const row of rows) {
+            const tr = body.insertRow();
+            for (const [key] of columns) {
+                const value = row[key];
+                tr.insertCell().textContent = value == null ? '—' : typeof value === 'number' && !Number.isInteger(value) ? value.toFixed(4) : String(value);
+            }
+        }
+    }
+    async function loadResults() {
+        try {
+            const response = await fetch('/api/training-results', {cache: 'no-store'});
+            const data = await response.json();
+            if (!response.ok || !data.success) throw new Error(data.error || 'No se pudieron cargar los resultados');
+            const d = data.dataset;
+            document.getElementById('dataset-summary').textContent = `${d.collection_clips} clips: ${d.unique_training_clips} de entrenamiento, ${d.validation_clips} de validación y ${d.test_clips} de test. Tabla de entrenamiento balanceada: ${d.balanced_training_examples} ejemplos.`;
+            renderTable('published', data.published_models, [['model','Modelo'], ['architecture','Arquitectura'], ['reference_accuracy','Accuracy de referencia'], ['reference_f1_macro','F1 macro de referencia']]);
+            renderTable('local-runs', data.local_runs, [['family','Modelo'], ['run','Corrida'], ['training_examples','Ejemplos de entrenamiento'], ['validation_examples','Ejemplos de validación'], ['epochs_requested','Épocas solicitadas'], ['validation_accuracy','Accuracy de validación'], ['validation_f1_macro','F1 macro de validación']]);
+            renderTable('historical-runs', data.historical_runs, [['family','Modelo'], ['run','Corrida'], ['fold','Fold'], ['training_examples','Entrenamiento'], ['validation_examples','Validación'], ['test_examples','Test'], ['elapsed_seconds','Duración (s)']]);
+        } catch (error) {
+            document.getElementById('results-error').textContent = error.message;
+        }
+    }
+    loadResults();
+    </script>
+</body>
+</html>

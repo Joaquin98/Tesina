@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clips del dataset</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    {% include '_top_nav.html' %}
+
+    <main class="container main-content">
+        <section class="section training-clips-section">
+            <div class="section-header training-clips-heading">
+                <div>
+                    <span class="section-kicker">Inspección del conjunto base</span>
+                    <h2>Clips del dataset</h2>
+                    <p>
+                        Explorá los fragmentos usados para ajustar y evaluar los modelos principales. El reproductor
+                        muestra directamente la entrada 224×224 usada por los modelos.
+                    </p>
+                </div>
+                <button id="training-clips-refresh" class="btn btn-secondary" type="button">Actualizar</button>
+            </div>
+
+            <div class="training-clips-summary" aria-label="Resumen del conjunto inicial">
+                <article class="dataset-summary-card">
+                    <span class="dataset-label">Colección base</span>
+                    <strong id="training-clips-collection">—</strong>
+                    <small>clips únicos disponibles</small>
+                </article>
+                <article class="dataset-summary-card">
+                    <span class="dataset-label">Entrenamiento</span>
+                    <strong id="training-clips-train-examples">—</strong>
+                    <small id="training-clips-train-unique">— clips únicos</small>
+                </article>
+                <article class="dataset-summary-card">
+                    <span class="dataset-label">Test</span>
+                    <strong id="training-clips-test">—</strong>
+                    <small>reservados para medir desempeño</small>
+                </article>
+                <article class="dataset-summary-card">
+                    <span class="dataset-label">Validación</span>
+                    <strong id="training-clips-validation">—</strong>
+                    <small>clips para seleccionar el modelo</small>
+                </article>
+                <article class="dataset-summary-card">
+                    <span class="dataset-label">Entrenamiento balanceado</span>
+                    <strong id="training-clips-balanced">—</strong>
+                    <small>ejemplos en balanced_train.csv</small>
+                </article>
+                <article class="dataset-summary-card">
+                    <span class="dataset-label">Repeticiones por balanceo</span>
+                    <strong id="training-clips-oversampled">—</strong>
+                    <small>ejemplos adicionales en entrenamiento</small>
+                </article>
+            </div>
+
+            <div class="training-clips-toolbar" aria-label="Filtros de clips iniciales">
+                <label class="search-field training-clips-search">
+                    <span class="sr-only">Buscar clip</span>
+                    <input id="training-clips-search" type="search" placeholder="Buscar por nombre..." autocomplete="off">
+                </label>
+                <label>
+                    <span>Clase</span>
+                    <select id="training-clips-label">
+                        <option value="all">Todas</option>
+                        <option value="line">Line</option>
+                        <option value="scrum">Scrum</option>
+                        <option value="other">Other</option>
+                    </select>
+                </label>
+                <label>
+                    <span>Partición</span>
+                    <select id="training-clips-split">
+                        <option value="train" selected>Entrenamiento</option>
+                        <option value="validation">Validación</option>
+                        <option value="test">Test</option>
+                        
+                        <option value="all">Colección completa</option>
+                    </select>
+                </label>
+                <span id="training-clips-result-count" class="selection-meta" aria-live="polite">Cargando...</span>
+            </div>
+
+            <div class="training-clips-workspace">
+                <div>
+                    <div id="training-clips-grid" class="training-clips-grid">
+                        <div class="loading">Cargando clips...</div>
+                    </div>
+                    <nav class="training-clips-pagination" aria-label="Paginación de clips">
+                        <button id="training-clips-prev" class="btn btn-secondary" type="button">Anterior</button>
+                        <span id="training-clips-page">Página 1 de 1</span>
+                        <button id="training-clips-next" class="btn btn-secondary" type="button">Siguiente</button>
+                    </nav>
+                </div>
+
+                <aside class="training-clip-player-panel" aria-label="Reproductor del clip seleccionado">
+                    <div class="training-clip-player-header">
+                        <span id="training-clip-player-label" class="badge other">OTHER</span>
+                        <span id="training-clip-player-split" class="training-split-badge">Entrenamiento</span>
+                    </div>
+                    <div id="training-clip-roi-stage" class="model-roi-stage">
+                        <video id="training-clip-player" controls controlslist="nofullscreen" preload="metadata" playsinline></video>
+                    </div>
+                    <div class="training-clip-view-options">
+                        <button type="button" id="training-clip-fullscreen" class="btn btn-secondary">Pantalla completa</button>
+                    </div>
+                    <p id="training-clip-roi-help" class="model-roi-help">
+                        Se muestra la entrada 224×224 completa utilizada por el modelo.
+                    </p>
+                    <div class="training-clip-player-copy">
+                        <h3 id="training-clip-player-name">Seleccioná un clip</h3>
+                        <p id="training-clip-player-detail">El clip se reproducirá en este panel.</p>
+                    </div>
+                    <div class="training-clips-note">
+                        <strong>Cómo leer la partición</strong>
+                        <p>
+                            Entrenamiento, validación y test contienen clips separados. La tabla balanceada selecciona
+                            y repite ejemplos únicamente dentro de entrenamiento para equilibrar las clases.
+                        </p>
+                    </div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/training_clips.js', v='dataset-actual-v2') }}"></script>
+</body>
+</html>

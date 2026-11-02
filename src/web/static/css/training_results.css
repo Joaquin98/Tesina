@@ -1,0 +1,204 @@
+/* ── Training Results page styles ─────────────────────────────────────────── */
+
+/* Section header row with sort control */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary, #6b7280);
+}
+
+.sort-select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    background: #fff;
+    cursor: pointer;
+}
+
+.row-count {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #6b7280);
+    background: var(--bg-secondary, #f3f4f6);
+    padding: 0.2rem 0.6rem;
+    border-radius: 99px;
+    white-space: nowrap;
+}
+
+/* ── Scrollable table ─────────────────────────────────────────────────────── */
+
+.table-wrapper {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border, #e5e7eb);
+    margin-bottom: 1.5rem;
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.results-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-secondary, #f9fafb);
+    padding: 0.5rem 0.75rem;
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+    border-bottom: 2px solid var(--border, #e5e7eb);
+    cursor: default;
+    user-select: none;
+}
+
+.results-table thead th:first-child { text-align: left; }
+
+.results-table tbody tr {
+    border-bottom: 1px solid var(--border, #f3f4f6);
+    transition: background 0.1s;
+}
+
+.results-table tbody tr:hover {
+    background: rgba(79, 70, 229, 0.05) !important;
+}
+
+.results-table tbody td {
+    padding: 0.4rem 0.75rem;
+    text-align: right;
+    color: var(--text-primary, #111827);
+}
+
+.results-table tbody td:first-child { text-align: left; }
+
+/* Top row (best result) gets a subtle left border accent */
+.results-table tbody tr.top-row td:first-child {
+    border-left: 3px solid #4f46e5;
+}
+
+.results-table .loading,
+.results-table .empty,
+.results-table .error {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary, #6b7280);
+    font-style: italic;
+}
+.results-table .error { color: #ef4444; }
+
+/* ── Chart thumbnails ─────────────────────────────────────────────────────── */
+
+.images-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.no-images {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #6b7280);
+    margin: 0;
+}
+
+.chart-thumb {
+    margin: 0;
+    cursor: pointer;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: box-shadow 0.15s, transform 0.15s;
+    max-width: 260px;
+}
+
+.chart-thumb:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+}
+
+.chart-thumb img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.chart-thumb figcaption {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+    text-align: center;
+    color: var(--text-secondary, #6b7280);
+    background: var(--bg-secondary, #f9fafb);
+    text-transform: capitalize;
+}
+
+/* ── Lightbox ─────────────────────────────────────────────────────────────── */
+
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox.hidden { display: none; }
+
+.lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+}
+
+.lightbox-content {
+    position: relative;
+    z-index: 1;
+    max-width: 90vw;
+    max-height: 90vh;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-content img {
+    max-width: 88vw;
+    max-height: 88vh;
+    display: block;
+}
+
+.lightbox-close {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+    cursor: pointer;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.lightbox-close:hover { background: rgba(0,0,0,0.8); }

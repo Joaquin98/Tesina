@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo Profesorado — Best Model</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 0; background: #0b1020; color: #e8ecff; }
+      .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+      .card { background: #151c35; border: 1px solid #28335f; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+      h1, h2 { margin: 0 0 12px 0; }
+      .muted { color: #9fb0ff; }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+      select, button, input { padding: 10px; border-radius: 8px; border: 1px solid #33427e; background: #0f1530; color: #fff; }
+      button { cursor: pointer; background: #2f58ff; border-color: #2f58ff; }
+      button:disabled { opacity: 0.6; cursor: not-allowed; }
+      .status { font-weight: bold; }
+      .pill { display: inline-block; padding: 4px 10px; border-radius: 999px; background: #223166; border: 1px solid #3b4f97; font-size: 12px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th, td { border-bottom: 1px solid #2b3768; padding: 8px; text-align: left; font-size: 14px; }
+      .timeline { margin-top: 12px; display: grid; gap: 8px; }
+      .item { background: #111938; border: 1px solid #2b3b7f; border-radius: 8px; padding: 8px; }
+  .player-wrap { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+  .player-box { background: #0e1430; border: 1px solid #2b3b7f; border-radius: 10px; padding: 10px; }
+  video { width: 100%; border-radius: 8px; background: #000; max-height: 420px; }
+  .tiny { font-size: 12px; color: #9fb0ff; }
+  .timeline-track { position: relative; height: 40px; background: #0d1433; border: 1px solid #33427e; border-radius: 8px; overflow: hidden; }
+  .timeline-seg { position: absolute; top: 6px; height: 26px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.35); cursor: pointer; }
+  .timeline-seg.line { background: rgba(86, 168, 255, 0.65); }
+  .timeline-seg.scrum { background: rgba(239, 116, 135, 0.72); }
+  .timeline-seg.other { background: rgba(145, 175, 195, 0.6); }
+  .seg-row { display:flex; align-items:center; gap: 8px; flex-wrap: wrap; }
+  .seg-chip { padding: 5px 9px; border: 1px solid #3e4f95; border-radius: 20px; font-size: 12px; cursor: pointer; background: #16204d; }
+  .seg-chip:hover { border-color: #6d87ff; }
+      .ok { color: #8bf7ad; }
+      .warn { color: #ffd37d; }
+      .error { color: #ff9da0; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <h1>Demo en Vivo — Mejor Modelo</h1>
+        <p class="muted">Modo fijo para presentación a profesorado. Sin selector de modelo (seguridad de demo).</p>
+        <div class="row">
+          <span class="pill" id="fixedModelPill">Modelo: cargando...</span>
+          <span class="pill" id="healthPill">Estado: verificando...</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>1) Seleccionar video</h2>
+        <div class="row">
+          <select id="videoSelect" style="min-width: 520px;"></select>
+          <input id="confidenceInput" type="number" value="0.5" min="0" max="1" step="0.05" />
+          <button id="analyzeBtn">Analizar</button>
+        </div>
+        <p class="muted">Confidence threshold recomendado para demo: 0.50–0.60</p>
+        <p class="status" id="statusText">Esperando acción...</p>
+      </div>
+
+      <div class="card">
+        <h2>2) Resultado rápido</h2>
+        <div id="summaryBox" class="muted">Sin resultados aún.</div>
+      </div>
+
+      <div class="card">
+        <h2>3) Video + Timeline interactivo</h2>
+        <div class="player-wrap">
+          <div class="player-box">
+            <video id="mainVideo" controls preload="metadata"></video>
+            <div class="tiny" id="videoInfo">Seleccioná y analizá un video para habilitar el reproductor.</div>
+          </div>
+          <div class="player-box">
+            <div class="row" style="margin-bottom: 10px;">
+              <label for="mergeGapInput" class="tiny">Merge gap (s)</label>
+              <input id="mergeGapInput" type="number" value="0.2" min="0" max="3" step="0.1" style="width: 90px;" />
+              <button id="remergeBtn" type="button">Recalcular bloques</button>
+            </div>
+
+            <div id="timelineTrack" class="timeline-track"></div>
+            <div class="tiny" id="timelineInfo" style="margin-top: 8px;">Sin bloques fusionados aún.</div>
+
+            <div class="row" style="margin-top: 10px;">
+              <button id="exportZipBtn" type="button" disabled>Descargar ZIP (bloques fusionados)</button>
+              <span id="exportStatus" class="tiny">Sin exportación.</span>
+            </div>
+
+            <div id="mergedChips" class="seg-row" style="margin-top: 10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>4) Timeline de detecciones</h2>
+        <div id="timeline" class="timeline muted">Sin detecciones aún.</div>
+      </div>
+
+      <div class="card">
+        <h2>Tabla de detecciones</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Clase</th>
+              <th>Confianza</th>
+              <th>Inicio (s)</th>
+              <th>Fin (s)</th>
+            </tr>
+          </thead>
+          <tbody id="detectionsBody">
+            <tr><td colspan="5" class="muted">Sin datos.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script src="/static/js/demo_best_model.js"></script>
+  </body>
+</html>
