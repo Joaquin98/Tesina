@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "model_name": "m1_h2_d2_cross_fold_ensemble",
+  "source_configuration": "PV-M1-H2-D2",
+  "deployment_policy": "equal_soft_vote_across_six_outer_folds",
+  "validation_status": "components_cross_validated_web_ensemble_not_independently_validated",
+  "label_order": [
+    "line",
+    "other",
+    "scrum"
+  ],
+  "rgb_sequence_shape": [
+    200,
+    2048
+  ],
+  "pose_sequence_shape": [
+    200,
+    62
+  ],
+  "geometry_feature_count": 549,
+  "pose_model": "yolo11n-pose.pt",
+  "recommended_web_thresholds": {
+    "line": 0.5000000000000001,
+    "scrum": 0.4500000000000001,
+    "source": "median_of_development_selected_fold_thresholds"
+  },
+  "cross_validation_metrics": {
+    "f1w_macro": 0.6008169056260128,
+    "f1w_line": 0.5669946088048774,
+    "f1w_scrum": 0.634639202447148,
+    "fp_far_hour": 10.954451886006604
+  },
+  "folds": [
+    {
+      "fold": "PV01",
+      "run_id": "PV-M1-H2-D2-PV01-S42",
+      "attempt": "attempt_001",
+      "test_group": "V_1",
+      "development_group": "V_2",
+      "dual_model": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV01-S42/attempt_001/dual.keras",
+      "geometry_rf": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV01-S42/attempt_001/geometry_rf.joblib",
+      "geometry_alpha": 0.35000000000000003,
+      "line_threshold": 0.45000000000000007,
+      "scrum_threshold": 0.8500000000000002,
+      "checkpoint_hash": "f0ce5c491be12cb106a74c6acf7be9155ca9ced1fbd366de56e7da5213e43961"
+    },
+    {
+      "fold": "PV02",
+      "run_id": "PV-M1-H2-D2-PV02-S42",
+      "attempt": "attempt_001",
+      "test_group": "V_2",
+      "development_group": "V_3",
+      "dual_model": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV02-S42/attempt_001/dual.keras",
+      "geometry_rf": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV02-S42/attempt_001/geometry_rf.joblib",
+      "geometry_alpha": 0.6000000000000001,
+      "line_threshold": 0.40000000000000013,
+      "scrum_threshold": 0.5000000000000001,
+      "checkpoint_hash": "d2bf16f9b7ee4e7bfcfd275e1eb0a6adf993ef5186f56f23c127a58d97c02eee"
+    },
+    {
+      "fold": "PV03",
+      "run_id": "PV-M1-H2-D2-PV03-S42",
+      "attempt": "attempt_001",
+      "test_group": "V_3",
+      "development_group": "V_4",
+      "dual_model": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV03-S42/attempt_001/dual.keras",
+      "geometry_rf": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV03-S42/attempt_001/geometry_rf.joblib",
+      "geometry_alpha": 0.35000000000000003,
+      "line_threshold": 0.5000000000000001,
+      "scrum_threshold": 0.1,
+      "checkpoint_hash": "a1f243f71433e7750a58b61b556bf3f6c42ba8fc2a9ace76fe398661125fd1d6"
+    },
+    {
+      "fold": "PV04",
+      "run_id": "PV-M1-H2-D2-PV04-S42",
+      "attempt": "attempt_001",
+      "test_group": "V_4",
+      "development_group": "V_5",
+      "dual_model": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV04-S42/attempt_001/dual.keras",
+      "geometry_rf": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV04-S42/attempt_001/geometry_rf.joblib",
+      "geometry_alpha": 0.6000000000000001,
+      "line_threshold": 0.7000000000000002,
+      "scrum_threshold": 0.40000000000000013,
+      "checkpoint_hash": "150490d448e3e017ad6ce1363d0a4f775b8f511fc39960edb02272c608b15ed4"
+    },
+    {
+      "fold": "PV05",
+      "run_id": "PV-M1-H2-D2-PV05-S42",
+      "attempt": "attempt_001",
+      "test_group": "V_5",
+      "development_group": "V_6",
+      "dual_model": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV05-S42/attempt_001/dual.keras",
+      "geometry_rf": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV05-S42/attempt_001/geometry_rf.joblib",
+      "geometry_alpha": 0.6000000000000001,
+      "line_threshold": 0.5000000000000001,
+      "scrum_threshold": 0.20000000000000004,
+      "checkpoint_hash": "afdd7c1b21b39fd30b1d7d7d3c2cac620f9ca297a1bbd6d623c96dab35fef9fb"
+    },
+    {
+      "fold": "PV06",
+      "run_id": "PV-M1-H2-D2-PV06-S42",
+      "attempt": "attempt_001",
+      "test_group": "V_6",
+      "development_group": "V_1",
+      "dual_model": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV06-S42/attempt_001/dual.keras",
+      "geometry_rf": "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV06-S42/attempt_001/geometry_rf.joblib",
+      "geometry_alpha": 0.35000000000000003,
+      "line_threshold": 0.5000000000000001,
+      "scrum_threshold": 0.7500000000000002,
+      "checkpoint_hash": "50848b92e58834e88203215de4bfb3cfcb6053d1790f9d623abddb1d72377abd"
+    }
+  ]
+}

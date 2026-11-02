@@ -1,0 +1,35 @@
+{
+  "panel": "PH",
+  "model": "M0",
+  "level": "B",
+  "data_regime": "",
+  "fold": "PH01",
+  "seed": 0,
+  "train_groups": [],
+  "development_group": "G02",
+  "test_group": "G01",
+  "run_id": "PH-M0-B-NA-PH01-S0",
+  "effective_run_id": "PH-M0-B-NA-PH01-S0",
+  "attempt": 1,
+  "smoke_limit": null,
+  "n_train": 0,
+  "n_dev": 816,
+  "n_test": 818,
+  "epochs_requested": 40,
+  "patience": 7,
+  "batch_size": 16,
+  "thresholds": {
+    "line": null,
+    "scrum": null,
+    "source": "published_argmax"
+  },
+  "model_metadata": {},
+  "artifacts": {
+    "models/cnn_rnn/checkpoints/best_model/best_model.keras": "f7675e270f805bd77230a5cdaedc14d28545b0c8ceca3f348a8d1ad676bedc26"
+  },
+  "checkpoint_hash": "21d65b619a1f78c81283725c31b985f63f489f4bc6516c073fc0ef4ee4e87a26",
+  "cache_signature": "a2ccf35ec4d9ab20",
+  "elapsed_seconds": 132.44121939968318,
+  "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0"
+}

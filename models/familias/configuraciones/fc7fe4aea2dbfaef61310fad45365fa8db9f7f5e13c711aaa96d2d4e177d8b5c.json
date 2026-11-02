@@ -1,0 +1,53 @@
+{
+  "panel": "PV",
+  "model": "M3",
+  "level": "H2",
+  "data_regime": "D2",
+  "fold": "PV04",
+  "seed": 42,
+  "train_groups": [
+    "V_1",
+    "V_2",
+    "V_3",
+    "V_6"
+  ],
+  "development_group": "V_5",
+  "test_group": "V_4",
+  "run_id": "PV-M3-H2-D2-PV04-S42",
+  "effective_run_id": "PV-M3-H2-D2-PV04-S42",
+  "attempt": 1,
+  "smoke_limit": null,
+  "n_train": 7090,
+  "n_dev": 865,
+  "n_test": 841,
+  "epochs_requested": 40,
+  "patience": 7,
+  "batch_size": 16,
+  "thresholds": {
+    "line": 0.7500000000000002,
+    "scrum": 0.6500000000000001,
+    "source": "development",
+    "line_verifier": 0.5988005624795086
+  },
+  "model_metadata": {
+    "static_alpha": 0.7000000000000001,
+    "temporal_role": "event_verifier_only",
+    "verifier_path": "experiments/line_cached_improvement_suite_20260818/outputs/stable_event_logreg_c0_1_pending_external_match.joblib",
+    "verifier_threshold": 0.11,
+    "verifier_historical_weight": 0.4
+  },
+  "artifacts": {
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M3-H2-D2-PV04-S42/attempt_001/static/dynamic_pca.joblib": "cee6ad98f2080e7bfdcbbf7305c171ef4e25f7bcf268bcb54e6f2395d9933f97",
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M3-H2-D2-PV04-S42/attempt_001/static/quantile_scaler.joblib": "f191fa6842a3d9465475d578ccf07745c565c01a1ee8411f40c441848f731036",
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M3-H2-D2-PV04-S42/attempt_001/static/logistic.joblib": "9bce47e9f9fd30c574196d415cb0a4b75977b2106a69b09345549fd1e2c6f392",
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M3-H2-D2-PV04-S42/attempt_001/static/historical.keras": "38391ba54f95e438836e7fdddca71c581b6a7f0f2d7942c9d147e22cf49eca73",
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M3-H2-D2-PV04-S42/attempt_001/temporal.pt": "3bc30543f13045ab8df74a6435b4882df481588ff765f1fd0cb04875d8afbea8",
+    "experiments/line_cached_improvement_suite_20260818/outputs/stable_event_logreg_c0_1_pending_external_match.joblib": "34e9f990a367a9e7ad2ae61439f3868cb5f6c40640d9a61c2379c44c0c4cb242",
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M3-H2-D2-PV04-S42/attempt_001/line_verifier.joblib": "72380db18b8ebc7c4805ca4e5d70a940d4332a97bbc03192878403a8eb4b3232"
+  },
+  "checkpoint_hash": "3e7343060f0df3b5a734d68574df32f650cc41cc393cb306a5fcdc81db6a2401",
+  "cache_signature": "a2ccf35ec4d9ab20",
+  "elapsed_seconds": 3448.4822466000915,
+  "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0"
+}

@@ -28,3 +28,22 @@ __pycache__/
 
 .runtime/
 .validation/
+**/.partial_run_*/
+
+# Caches generadas durante la ejecucion, sin versionar su contenido
+**/feature_cache/
+**/pose_cache/
+**/flow_cache/
+**/rgb_cache/
+**/cache/
+data/results/preprocessed/
+tmp/training_clip_previews/
+
+# Pesos seleccionados de los cuatro modelos, versionados mediante LFS
+!/models/familias/pesos/*.keras
+!/models/familias/pesos/*.joblib
+!/models/familias/pesos/*.pt
+!/models/M0/checkpoints/feature_extractor_resnet50.keras
+!/models/M0/checkpoints/best_model/best_model.keras
+!/models/M1/checkpoints/dual.keras
+!/yolo11n-pose.pt

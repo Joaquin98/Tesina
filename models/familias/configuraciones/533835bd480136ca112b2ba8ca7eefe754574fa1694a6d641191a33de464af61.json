@@ -1,0 +1,44 @@
+{
+  "panel": "PV",
+  "model": "M1",
+  "level": "H2",
+  "data_regime": "D2",
+  "fold": "PV06",
+  "seed": 42,
+  "train_groups": [
+    "V_2",
+    "V_3",
+    "V_4",
+    "V_5"
+  ],
+  "development_group": "V_1",
+  "test_group": "V_6",
+  "run_id": "PV-M1-H2-D2-PV06-S42",
+  "effective_run_id": "PV-M1-H2-D2-PV06-S42",
+  "attempt": 1,
+  "smoke_limit": null,
+  "n_train": 7366,
+  "n_dev": 732,
+  "n_test": 698,
+  "epochs_requested": 40,
+  "patience": 7,
+  "batch_size": 16,
+  "thresholds": {
+    "line": 0.5000000000000001,
+    "scrum": 0.7500000000000002,
+    "source": "development"
+  },
+  "model_metadata": {
+    "geometry_alpha": 0.35000000000000003,
+    "variant": "M1-100-H2"
+  },
+  "artifacts": {
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV06-S42/attempt_001/geometry_rf.joblib": "5dabe0e36638ab5b2b7ba617f6054eeb8ad429e8de896333d0724be769af358a",
+    "experiments/final_model_comparison_20260827/outputs/runs/PV-M1-H2-D2-PV06-S42/attempt_001/dual.keras": "dac48023af593f941253e99109e9ae4d3cd91b9d2e5119a687efc5a5f0a9da36"
+  },
+  "checkpoint_hash": "50848b92e58834e88203215de4bfb3cfcb6053d1790f9d623abddb1d72377abd",
+  "cache_signature": "a2ccf35ec4d9ab20",
+  "elapsed_seconds": 2024.107157099992,
+  "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0"
+}
